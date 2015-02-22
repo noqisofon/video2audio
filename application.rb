@@ -41,11 +41,7 @@ module Video2Audio
     #
     #
     def start
-      result = run
-
-      result = 0 if result.nil?
-
-      result
+      run ? run : 0
     end
   end
 
