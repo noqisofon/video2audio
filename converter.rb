@@ -125,7 +125,7 @@ HELP
       @found_pattern = "*.{#{EXTS.join( ',' )}}"
 
       if @options.has_key? :file then
-        @input_path, input_parent_path = found_path options[:file]
+        @input_path, input_parent_path = found_path @options[:file]
       end
 
       if @options.has_key? :audio_basepath then
