@@ -1,13 +1,11 @@
 # -*- coding: utf-8; mode: ruby; -*-
 
-# こんな感じでひっそりと外部ファイルが置いてあるパスを追加しておきます。
-$:.unshift File.dirname( __FILE__ )
-
 require 'find'
 require 'fileutils'
 require 'logger'
 require 'optparse'
-require 'application'
+
+require_relative 'application'
 
 
 module Video2Audio
@@ -19,15 +17,15 @@ module Video2Audio
     PROGRAM = File.basename __FILE__, ".*"
     EXTS = [ ".flv", ".mp4", ".webm" ]
     # オリジナルなヘルプテキスト(上のほう)を予め書いておきます。
-    HELP_TEXT = <<HELP
-#{PROGRAM} is extract music from videos.
+    HELP_TEXT = <<-HELP
+    #{PROGRAM} is extract music from videos.
 
-Basic Command Line Usage:
-  #{PROGRAM} --recursive <video directory path> --base ~/Music
-  #{PROGRAM} <video file path> -o <audio file path>
+    Basic Command Line Usage:
+      #{PROGRAM} --recursive <video directory path> --base ~/Music
+      #{PROGRAM} <video file path> -o <audio file path>
 
-Options:
-HELP
+    Options:
+    HELP
 
     #
     #
