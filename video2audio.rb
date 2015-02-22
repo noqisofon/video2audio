@@ -3,5 +3,4 @@
 
 require_relative 'converter'
 
-progn = Video2Audio::Converter.new
-status = progn.start
+Video2Audio::Converter.new.start
