@@ -1,13 +1,11 @@
 # -*- coding: utf-8; mode: ruby; -*-
 
-# こんな感じでひっそりと外部ファイルが置いてあるパスを追加しておきます。
-$:.unshift File.dirname( __FILE__ )
-
 require 'find'
 require 'fileutils'
 require 'logger'
 require 'optparse'
-require 'application'
+
+require_relative 'application'
 
 
 module Video2Audio
