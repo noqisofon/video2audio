@@ -108,11 +108,11 @@ module Video2Audio
       @logger.debug { "option size is #{ARGV.size}" }
       case ARGV.size
       when 0
-      @logger.warn { "option nothing" }
+        @logger.warn { "option nothing" }
         exit 0
       when 1..2
         @logger.debug { "option at: 0. ; => #{ARGV[0]}" }
-      @logger.debug { "option at: 1. ; => #{ARGV[1]}" } if ARGV.size == 2
+        @logger.debug { "option at: 1. ; => #{ARGV[1]}" } if ARGV.size == 2
         @input_path, @input_parent_path = found_path ARGV[0] if ARGV.size == 1
         @output_path, @output_parent_path = found_path ARGV[1], true if ARGV.size == 2
       else
