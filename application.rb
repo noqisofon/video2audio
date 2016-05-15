@@ -15,7 +15,8 @@ module Video2Audio
 
     def initialize(appname = nil)
       @application_name = appname
-      @logger = Logger.new(STDERR)
+      @logger = Logger.new( STDOUT )
+      @logger.level = Logger::ERROR
     end
 
     #
@@ -27,7 +28,7 @@ module Video2Audio
     #
     #
     def log(severity, message = nil, &block)
-      logger.add(serverity, message, application_name, &block) if logger
+      logger.add( serverity, message, application_name, &block ) if logger
     end
 
     #

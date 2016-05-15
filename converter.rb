@@ -14,18 +14,19 @@ module Video2Audio
   #
   #
   class Converter < Application
-    PROGRAM = File.basename __FILE__, ".*"
-    EXTS = [ ".flv", ".mp4", ".webm" ]
+    # PROGRAM = File.basename __FILE__, ".*"
+    PROGRAM = "video2audio"
+    EXTS = [ ".flv", ".mp4", ".webm", ".mkv" ]
     # オリジナルなヘルプテキスト(上のほう)を予め書いておきます。
     HELP_TEXT = <<-HELP
-    #{PROGRAM} is extract music from videos.
+#{PROGRAM} is extract music from videos.
 
-    Basic Command Line Usage:
-      #{PROGRAM} --recursive <video directory path> --base ~/Music
-      #{PROGRAM} <video file path> -o <audio file path>
+Basic Command Line Usage:
+    #{PROGRAM} --recursive <video directory path> --base ~/Music
+    #{PROGRAM} <video file path> -o <audio file path>
 
-    Options:
-    HELP
+Options:
+HELP
 
     #
     #
@@ -94,7 +95,7 @@ module Video2Audio
         #
         opts.on( "--debug", "run debug mode" ) do |debug_level|
           @options[:run_level] = debug_level
-          #level = Logger::DEBUG
+          @logger.level = Logger::DEBUG
         end
       end
       # 引数のない parse はデフォルトで ARGV を使うんだと思います。
@@ -109,6 +110,7 @@ module Video2Audio
       case ARGV.size
       when 0
         @logger.warn { "option nothing" }
+
         exit 0
       when 1..2
         @logger.debug { "option at: 0. ; => #{ARGV[0]}" }
@@ -117,6 +119,7 @@ module Video2Audio
         @output_path, @output_parent_path = found_path ARGV[1], true if ARGV.size == 2
       else
         @logger.fatal { "#{PROGRAM}: invalid options. run `#{PROGRAM} --help' for assistance." }
+
         exit 0
       end
 
@@ -148,11 +151,11 @@ module Video2Audio
       end
 
       if @logger.debug? then
-        @logger.debug { "input path: #{@input_path}" }
-        @logger.debug { "input parent path: #{@input_parent_path}" }
-        @logger.debug { "output path: #{@output_path}" }
+        @logger.debug { "        input path: #{@input_path}" }
+        @logger.debug { " input parent path: #{@input_parent_path}" }
+        @logger.debug { "       output path: #{@output_path}" }
         @logger.debug { "output parent path: #{@output_parent_path}" }
-        @logger.debug { "output base path: #{@output_base_path}" }
+        @logger.debug { "  output base path: #{@output_base_path}" }
       end
     end
 
@@ -162,7 +165,7 @@ module Video2Audio
     #
     def found_path(path, absent_creation = false)
       original_path = File.expand_path path
-      @logger.debug { "original path: #{original_path}" }
+      @logger.debug { "    original path: #{original_path}" }
 
       if File.directory? original_path then
         original_parent_path = original_path
@@ -172,8 +175,9 @@ module Video2Audio
         original_parent_path = original_path
       end
       @logger.debug { "original dir path: #{original_parent_path}" }
+
       if absent_creation and not File.exist? original_parent_path then
-        @logger.debug { "create dir #{original_parent_path}" }
+        @logger.debug { "mkdir -p #{original_parent_path}" }
         FileUtils.mkdir_p original_parent_path
       else
         unless File.exist? original_parent_path then
@@ -201,15 +205,16 @@ module Video2Audio
         @logger.debug { "#{File.ctime( outfile )} > #{File.ctime( infile )} # => #{File.ctime( outfile ) > File.ctime( infile )}" }
         return 1 if File.ctime( outfile ) > File.ctime( infile )
       end
-      @logger.debug { "ffmpeg -i '#{infile}' -y -vn -acodec #{options[:audio_codec]} -ab #{options[:audio_bitrates]} -ar #{options[:audio_sampling]} -ac #{options[:audio_channel]} '#{outfile}'" }
-      system "ffmpeg -i '#{infile}' -y -vn -acodec #{options[:audio_codec]} -ab #{options[:audio_bitrates]} -ar #{options[:audio_sampling]} -ac #{options[:audio_channel]} '#{outfile}'"
+      command = "ffmpeg -i \"#{infile}\" -y -vn -acodec #{options[:audio_codec]} -ab #{options[:audio_bitrates]} -ar #{options[:audio_sampling]} -ac #{options[:audio_channel]} \"#{outfile}\""
+      @logger.debug { command }
+      system command
     end
 
     #
     #
     #
     def convert_single_file
-      @logger.debug { "#{@input_path} is file." }
+      @logger.debug { "'#{@input_path}' is file." }
       in_filename = @input_path
       if File.directory? @output_path then
         out_filename = File.join @output_parent_path, "#{File.basename( @input_path, '.*' )}.ogg"
@@ -223,7 +228,7 @@ module Video2Audio
     #
     #
     def convert_many_files
-      @logger.debug { "#{@input_path} is directory." }
+      @logger.debug { "'#{@input_path}' is directory." }
 
       Dir.chdir( @input_parent_path ) do |current_dir|
         Dir.glob( @found_pattern ) do |filename|
@@ -238,13 +243,14 @@ module Video2Audio
     #
     #
     def convert_recursive_many_files
-      @logger.debug { "#{@input_path} is directory." }
+      @logger.debug { "'#{@input_path}' is directory." }
       input_parent_dirname = File.dirname( @input_parent_path )
       Find.find( @input_parent_path ) do |path|
         if File.directory? path then
           output_parent_path = path.gsub( File.dirname( @input_parent_path ), @output_base_path )
-          @logger.debug { "current path: #{path}" }
+          @logger.debug { "    current path: #{path}" }
           FileUtils.mkdir_p output_parent_path unless File.exist? output_parent_path
+
           next
         else
           next unless EXTS.include?( File.extname path )
@@ -253,7 +259,7 @@ module Video2Audio
           @logger.debug { "temp parent path: #{temp_parent_path}" }
 
           unless temp_parent_path == output_parent_path then
-            @logger.debug { "parent path: #{temp_parent_path}" }
+            @logger.debug { "     parent path: #{temp_parent_path}" }
             output_parent_path = temp_parent_path
           end
         end
