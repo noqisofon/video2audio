@@ -217,7 +217,7 @@ HELP
       @logger.debug { "'#{@input_path}' is file." }
       in_filename = @input_path
       if File.directory? @output_path then
-        out_filename = File.join @output_parent_path, "#{File.basename( @input_path, '.*' )}.ogg"
+        out_filename = File.join @output_parent_path, "#{File.basename( @input_path, '.*' )}.oga"
       else
         out_filename = @output_path
       end
@@ -233,7 +233,7 @@ HELP
       Dir.chdir( @input_parent_path ) do |current_dir|
         Dir.glob( @found_pattern ) do |filename|
           in_filename = File.join( @input_parent_path, filename )
-          out_filename = File.join( @output_parent_path, "#{File.basename( filename, '.*' )}.ogg" )
+          out_filename = File.join( @output_parent_path, "#{File.basename( filename, '.*' )}.oga" )
           ffmpeg_convert in_filename, out_filename
         end
       end
@@ -264,7 +264,7 @@ HELP
           end
         end
         in_filename = path
-        out_filename = File.join( output_parent_path, "#{File.basename( path, '.*' )}.ogg" )
+        out_filename = File.join( output_parent_path, "#{File.basename( path, '.*' )}.oga" )
 
         ffmpeg_convert in_filename, out_filename
       end
