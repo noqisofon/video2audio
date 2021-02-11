@@ -85,6 +85,12 @@ HELP
           @options[:audio_basepath] = audio_basepath
         end
         #
+        # ffmpeg のパスを指定します。
+        #
+        opts.on( "--ffmpeg PATH", "path to ffmpeg" ) do |ffmpeg_path|
+          @options[:ffmpeg_path] = ffmpeg_path
+        end
+        #
         # 指定されたディレクトリを再帰的に検索します。
         #
         opts.on( "-r", "--recursive", "search for recursive" ) do |search_recursive|
@@ -100,13 +106,16 @@ HELP
       end
       # 引数のない parse はデフォルトで ARGV を使うんだと思います。
       option_parser.parse!
+
+      @logger.debug { "@options: #{@options}" }
     end
 
     #
     #
     #
     def argument_verify
-      @logger.debug { "option size is #{ARGV.size}" }
+      @logger.debug { "cpmmand line parameter: #{ARGV}" }
+
       case ARGV.size
       when 0
         @logger.warn { "option nothing" }
@@ -114,9 +123,21 @@ HELP
         exit 0
       when 1..2
         @logger.debug { "option at: 0. ; => #{ARGV[0]}" }
-        @logger.debug { "option at: 1. ; => #{ARGV[1]}" } if ARGV.size == 2
-        @input_path, @input_parent_path = found_path ARGV[0] if ARGV.size == 1
-        @output_path, @output_parent_path = found_path ARGV[1], true if ARGV.size == 2
+        @logger.debug { "option at: 1. ; => #{ARGV[1]}" }            if ARGV.size == 2
+
+        argv = ARGV.clone
+        if argv.first.end_with? '\\' then
+          @logger.debug { '末尾にバックスラッシュがあります！' }
+          # 末尾にバックスラッシュがあった場合、それは半角スペースが含まれたディレクトリ名の一部かもしれない。
+          # この場合は末尾を pop して先頭とくっつける。
+          tail = argv.pop
+
+          argv[0] = argv[0].delete_suffix( '\\' ) + ' ' + tail
+        end
+
+        @input_path , @input_parent_path  = found_path argv[0]       if argv.size == 1
+        @output_path, @output_parent_path = found_path argv[1], true if argv.size == 2
+        # よく考えると、2 つめの引数を出力パスにしちゃうのはよくなさそう…。
       else
         @logger.fatal { "#{PROGRAM}: invalid options. run `#{PROGRAM} --help' for assistance." }
 
@@ -138,16 +159,22 @@ HELP
 
       if @options.has_key? :recursive then
         @search_recursive_p = true
-        @logger.info { "search recursive on" }
+        @logger.info { "search recursive: on" }
       else
         @search_recursive_p = false
-        @logger.info { "search recursive false" }
+        @logger.info { "search recursive: off" }
       end
 
       if @options.has_key? :output then
         @output_path, @output_parent_path = found_path @options[:output], true
       else
         # @output_parent_path = @input_parent_path unless @output_parent_path.nil?
+      end
+
+      if @options.key? :ffmpeg_path then
+        @ffmpeg_command = File.expand_path( @options[:ffmpeg_path] )
+      else
+        @ffmpeg_command = 'ffmpeg'
       end
 
       if @logger.debug? then
@@ -205,8 +232,10 @@ HELP
         @logger.debug { "#{File.ctime( outfile )} > #{File.ctime( infile )} # => #{File.ctime( outfile ) > File.ctime( infile )}" }
         return 1 if File.ctime( outfile ) > File.ctime( infile )
       end
-      command = "ffmpeg -i \"#{infile}\" -y -vn -acodec #{options[:audio_codec]} -ab #{options[:audio_bitrates]} -ar #{options[:audio_sampling]} -ac #{options[:audio_channel]} \"#{outfile}\""
+
+      command = "#{@ffmpeg_command} -i \"#{infile}\" -y -vn -acodec #{options[:audio_codec]} -ab #{options[:audio_bitrates]} -ar #{options[:audio_sampling]} -ac #{options[:audio_channel]} \"#{outfile}\""
       @logger.debug { command }
+
       system command
     end
 
@@ -244,6 +273,7 @@ HELP
     #
     def convert_recursive_many_files
       @logger.debug { "'#{@input_path}' is directory." }
+      
       input_parent_dirname = File.dirname( @input_parent_path )
       Find.find( @input_parent_path ) do |path|
         if File.directory? path then
